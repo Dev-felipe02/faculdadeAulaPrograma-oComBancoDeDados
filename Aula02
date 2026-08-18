@@ -1,0 +1,88 @@
+REGRAS PARA O INNER JOIN:
+
+1° Necessario 2 tabelas ou main;
+2° Tabelas precisam estar relacionadas em primeiro grau(PK e FK);
+3° Obrigatório o uso das clausulas INNER JOIN e ON.
+
+Ex:
+
+select customers.CustomerID,
+ customers.CompanyName, 
+ customers.ContactName, 
+ customers.address, 
+ orders.OrderID, 
+ orders.OrderDate, 
+ orders.ShipVia,
+ `order details`.ProductID,
+ `order details`.Quantity, 
+ `order details`.UnitPrice
+from customers inner join orders
+on customers.CustomerID = orders.CustomerID
+inner join `order details`
+on orders.orderID = `order details`.orderID;
+
+SQL DDL: Creat, Drop, Alter.
+SQL DML: Select, Insert, Update, Delete.
+
+-- COMANDO DE CRIAÇÃO DE USUARIO SQL DDL --
+
+create user 'Felipe' identified by '240306';
+
+select * from mysql.user;
+
+alter user 'Felipe' identified by '142418';
+
+drop user 'Felipe';
+
+create user 'Joao' identified by '1234';
+create user 'Maria' identified by '1234';
+create user 'Jose' identified by '1234';
+create user 'Pedro' identified by '1234';
+
+select * from mysql.user
+where user in ('Joao', 'Maria', 'Jose', 'Pedro');
+
+!!!!!!!!!!!!  VAI CAIR NA PROVA: TIRAR E COLOCAR PERMIÇÃO DE USUARIOS.  !!!!!!!!!!!!!!
+
+grant select, insert on customers to 'Maria';
+grant select, insert on orders to 'Maria';
+grant select, insert on products to 'Maria';
+
+revoke insert on products from 'Maria';
+
+select * from mysql.tables_priv where user = 'Maria';
+
+flush privileges;
+
+-- Criação de roles --
+
+create role 'gestor_dados';
+grant insert, update, delete on customers to 'gestor_dados';
+grant insert, update, delete on orders to 'gestor_dados';
+grant insert, update, delete on products to 'gestor_dados';
+
+-- Add usuario a role --
+
+grant 'gestor_dados' to 'Jose';
+grant 'gestor_dados' to 'Joao';
+
+select * from mysql.roles_mapping where role = 'gestor_dados';
+
+create role 'analista_dados';
+grant insert, update on customers to 'analista_dados';
+grant insert, update on orders to 'analista_dados';
+grant insert, update on products to 'analista_dados';
+
+grant 'analista_dados' to 'Pedro';
+
+select * from mysql.roles_mapping where role = 'analista_dados';
+
+create role 'visitante_dados';
+grant insert, delete on customers to 'visitante_dados';
+grant insert, delete on orders to 'visitante_dados';
+grant insert, delete on products to 'visitante_dados';
+
+grant 'visitante_dados' to 'Maria';
+
+select * from mysql.roles_mapping where role = 'visitante_dados';
+
