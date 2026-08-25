@@ -1,0 +1,63 @@
+-- Procedure Simples
+
+delimiter $$
+create or replace procedure sp_listaCliente()
+
+begin
+	select customerid, contactname, phone, address
+	from customers;
+end;
+$$
+
+-- Chamada de Procedure
+
+call sp_listaCliente();
+
+drop procedure sp_listaCliente;
+
+delimiter $$
+create procedure sp_listaClienteFiltro(in varNomeContato varchar(30))
+
+begin
+
+	select customerid, contactname, phone, address
+	from customers
+    where contactname = varNomeContato;
+    
+end;
+$$
+
+call sp_listaClienteFiltro('Antonio Moreno')
+
+delimiter //
+create or replace procedure sp_listaPedidosFiltros(in varCodPedido int,
+												   in varDataPedido datetime)
+
+begin
+	select orderId, customerid, orderdate, shipvia
+    from orders
+    where orderid = varCodPedido or orderdate = varDataPedido;
+    
+end;
+//
+
+call sp_listaPedidosFiltros(10254,'1996-07-11');
+
+-- Procedure com variaveis de entra e if
+
+delimiter //
+create or replace procedure sp_listaPedidosFiltrosIf(in varCodPedido int,
+												   in varDataPedido datetime)
+begin
+    if varCodPedido is null and varDataPedido is null then
+			select orderId, customerid, orderdate, shipvia
+            from orders;
+	else
+		select orderId, customerid, orderdate, shipvia
+		from orders
+		where orderid = varCodPedido or orderdate = varDataPedido;
+	end if;
+end;
+//
+
+call sp_listaPedidosFiltrosIf(null, null);
