@@ -1,1 +1,264 @@
 
+-- Procedure Simples
+
+delimiter $$
+create or replace procedure sp_listaCliente()
+
+begin
+	select customerid, contactname, phone, address
+	from customers;
+end;
+$$
+
+-- Chamada de Procedure
+
+call sp_listaCliente();
+
+drop procedure sp_listaCliente;
+
+delimiter $$
+create procedure sp_listaClienteFiltro(in varNomeContato varchar(30))
+
+begin
+
+	select customerid, contactname, phone, address
+	from customers
+    where contactname = varNomeContato;
+    
+end;
+$$
+
+call sp_listaClienteFiltro('Antonio Moreno')
+
+delimiter //
+create or replace procedure sp_listaPedidosFiltros(in varCodPedido int,
+												   in varDataPedido datetime)
+
+begin
+	select orderId, customerid, orderdate, shipvia
+    from orders
+    where orderid = varCodPedido or orderdate = varDataPedido;
+    
+end;
+//
+
+call sp_listaPedidosFiltros(10254,'1996-07-11');
+
+-- Procedure com variaveis de entra e if
+
+delimiter //
+create or replace procedure sp_listaPedidosFiltrosIf(in varCodPedido int,
+												   in varDataPedido datetime)
+begin
+    if varCodPedido is null and varDataPedido is null then
+			select orderId, customerid, orderdate, shipvia
+            from orders;
+	else
+		select orderId, customerid, orderdate, shipvia
+		from orders
+		where orderid = varCodPedido or orderdate = varDataPedido;
+	end if;
+end;
+//
+
+call sp_listaPedidosFiltrosIf(null, null);
+
+Delimiter //
+create or replace procedure sp_atualizaProd(varCodProd int, varPrecoProd dec(10,4))
+
+begin
+	if (varCodProd is not null and varPrecoProd is not null) then
+		update products
+		set UnitPrice = varPrecoProd
+		where productId = varCodProd;
+	else
+		select 'Os parametros estão nulos';
+    end if;
+end;
+//
+
+call sp_atualizaProd(1, 100);
+
+call sp_atualizaProd(null, 100);
+
+select * from products;
+
+delimiter //
+create or replace procedure sp_estoqueProdutos(varCodProd int)
+begin
+	declare varQtdEstoque int;
+    declare varMsg varchar(50);
+    
+    -- buscando a quantidade em estoque do produto
+    
+    select unitsinstock into varQtdEstoque
+    from products
+    where productid = varCodProd;
+    
+    if (varQtdEstoque >= 100) then
+		set varMsg = concat('O estoque do produto', varCodProd, ' está alto : ', varQtdEstoque);
+	else
+		if (varQtdEstoque <= 99 and varQtdEstoque >= 11) then
+			set varMsg = concat('O estoque do produto', varCodProd, ' está ok : ', varQtdEstoque);
+		else
+			set varMsg = concat('O estoque do produto', varCodProd, ' está baixo : ', varQtdEstoque);
+		end if;
+	end if;
+    -- imprime a variavel com a frase do estoque
+    select varMsg;
+end;
+//
+
+call sp_estoqueProdutos(1);
+select * from products where productid = 1;
+
+delimiter //
+create or replace procedure sp_estoqueProdutosWhen(varCodProd int)
+begin
+	declare varQtdEstoque int;
+    declare varMsg varchar(50);
+    
+    -- buscando a quantidade em estoque do produto
+    
+    select unitsinstock into varQtdEstoque
+    from products
+    where productid = varCodProd;
+    
+    -- exemplo com switch case
+    
+    case when varQtdEstoque >= 100 then
+		set varMsg = concat('O estoque do produto', varCodProd, ' está alto : ', varQtdEstoque);
+	when (varQtdEstoque <= 99 and varQtdEstoque >= 11) then
+			set varMsg = concat('O estoque do produto', varCodProd, ' está ok : ', varQtdEstoque);
+		else
+			set varMsg = concat('O estoque do produto', varCodProd, ' está baixo : ', varQtdEstoque);
+	end case;
+    -- imprime a variavel com a frase do estoque
+    select varMsg;
+end;
+//
+
+call sp_estoqueProdutosWhen(2);
+select * from products where productid = 2;
+
+-- Teste "Limit"
+
+select * from orders
+order by orderid desc
+limit 5,10;
+
+delimiter //
+create or replace procedure sp_lacoWhileCont(varPasso int)
+begin
+	declare varContador int;
+    declare varTotalPedidos int;
+	set varContador = 0;
+
+-- Busca quantidade de pedidos
+
+	select count(*) into varTotalPedidos from orders;
+
+	while (varContador <= varTotalPedidos) do
+		select * from orders
+		limit varContador, varPasso;
+		set varContador = varContador + varPasso;
+	end while;
+end;
+//
+
+call sp_lacoWhileCont(6);
+
+-- Funções Nativas
+
+-- Vezes *
+
+select productid,
+	   productname,
+       (unitprice * unitsinstock) as totalProduto 
+from products;
+
+-- Soma +
+
+select sum((unitprice * unitsinstock)) as totalEstoque
+from products;
+
+-- Outras Funções:
+
+select min(unitprice) as menorValor,
+	   max(unitprice) as maiorValor,
+       avg(unitprice) as MediaValor,
+       count(unitprice) as QtdRegistros
+from products;
+
+-- Concat: concatena uma string;
+-- Round: arredonda casas inteiras ou decimais;
+-- Truncate: corta casas decimais.
+
+select orders.OrderID,
+	   orders.OrderDate,
+	   concat('R$: ', round(sum((UnitPrice * Quantity)), 2)) as totalItem,
+       concat('R$: ', truncate(sum((UnitPrice * Quantity)), 2)) as totalItem
+from `order details` inner join orders
+on `order details`.orderID = orders.orderID
+group by OrderID;
+
+select round(1.9999999, 2);
+select truncate(1.9999999, 2);
+
+-- Abs: numero absoluto.
+
+select abs(-558458);
+
+-- Cos: coseno.
+
+select cos(1/2);
+
+-- Rand: gera um numero aleatório entre 0 e 1.
+
+select rand();
+
+-- Funções de String
+
+select concat('Codigo Cliente: ', customerID, 'Nome de Contato: ', contactname)
+from customers;
+
+select upper(contactname) as maiusculo,
+	   lower(contactname) as minuscolo
+from customers;
+
+select contactname, length(contactname)
+from customers;
+
+select replace(contactname, 'Moreno', 'XXXXXXXXXXX')
+from customers;
+
+select substring(contactname, 5)
+from customers;
+
+select substring(contactname from 5)
+from customers;
+
+select substring(contactname, 5, 3)
+from customers;
+
+-- Funções Data
+
+select now(), sysdate(), localtimestamp(), localtime();
+
+select day(now()), year(now()), month(now()), hour(now()), minute(now()), second(now());
+
+select dayofyear(now());
+
+select orderid,
+	   orderdate,
+       shippedDate,
+	   datediff(shippedDate, orderdate) as 'Dias entre as datas',
+       date_add(orderdate, interval 10 day)
+from orders;
+
+set lc_time_names = 'pt_BR';
+select date_format(orderdate, '%D %Y %a %W %Y %M %j %T %k')
+from orders;
+
+select cast('20241201' as date);
+select convert('20241201' , date);
