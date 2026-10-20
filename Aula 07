@@ -1,0 +1,97 @@
+delimiter //
+create or replace trigger tr_baixaEstoque_ins
+after insert on `order details`
+for each row
+begin
+
+	update products
+    set unitsinstock = unitsinstock - new.quantity
+    where productId = new.productId;
+
+end;
+//
+
+select * from orders;
+
+select * from `order details`
+where orderid = 10248;
+
+select * from products
+where productid = 1;
+
+insert into `order details` (orderid, productid, unitprice, quantity, discount)
+values (10248, 1, 100, 9, 0);
+
+-- trigger de delete - repoe estoque do produto
+
+delimiter //
+create trigger tr_baixarEstoque_del
+after delete on `order details`
+for each row
+begin
+
+	update products
+	set UnitsInStock = UnitsInStock + old.quantity
+	where ProductID = old.ProductID;
+
+end;
+//
+
+delete from `order details`
+where ProductID = 1 and OrderID = 10248;
+
+select * from products where ProductID = 1;
+
+-- trigger de updete que repoe ou retira do estoque dependendo se está aumentando
+
+delimiter //
+create trigger tr_baixarEstoque_upd
+after update on `order details`
+for each row
+begin
+
+	update products
+    set UnitsInStock = UnitsInStock - new.quantity + old.quantity
+    where ProductID = new.ProductID;
+
+end;
+//
+
+select * from `order details`
+where OrderID = 10248;
+
+update `order details`
+set quantity = quantity - 10
+where ProductID = 11 and OrderID = 10248;
+
+select * from products where ProductID = 11;
+
+create table audit_tab
+(
+cod_audit int primary key auto_increment,
+codprod int,
+valorNovo dec(10,2),
+valorAntigo dec(10,2),
+dataHora datetime,
+Host_name varchar(30),
+Login_name varchar(10),
+strEvento varchar(15)
+);
+
+delimiter //
+create trigger tr_auditaProd
+after update on products
+for each row
+begin
+
+	insert into audit_tab (codprod,valorNovo,valorAntigo,dataHora,Host_name,Login_name,strEvento)
+    values(old.ProductID, new.UnitPrice, old.UnitPrice, now(), @@hostname, user(), 'update');
+
+end;
+//
+
+update products
+set UnitPrice = 50
+where ProductID = 1;
+
+select * from audit_tab;
