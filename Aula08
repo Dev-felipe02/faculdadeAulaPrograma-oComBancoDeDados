@@ -1,0 +1,35 @@
+use northwind;
+
+show index from customers;
+
+desc customers;
+
+create index idx_ContactName on customers(ContactName);
+
+explain
+select * 
+from customers
+where address like 'A%';
+
+explain
+select * 
+from customers
+where ContactName like 'A%';
+
+explain
+select * 
+from customers
+where city like 'A%';
+
+create fulltext index idx_full on customers(address, contactname);
+
+select * from customers
+where match (address, contactname)
+against('ana');
+
+select * from customers
+where match (address, contactname)
+against('lusadas');
+
+drop index idx_contactname on customers;
+drop index idx_full on customers;
